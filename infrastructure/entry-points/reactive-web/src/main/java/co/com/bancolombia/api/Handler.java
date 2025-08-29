@@ -4,7 +4,6 @@ import co.com.bancolombia.api.mapper.LoanRequestMapper;
 import co.com.bancolombia.api.request.CreditRequest;
 import co.com.bancolombia.api.response.ApiResponse;
 import co.com.bancolombia.api.validator.GenericValidator;
-import co.com.bancolombia.model.loanrequest.LoanRequest;
 import co.com.bancolombia.usecase.saveuser.SaveLoanRequestUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,10 +31,7 @@ public class Handler {
                     return saveLoanRequestUseCase.execute(loanRequest, creditRequest.getDocumentNumber());
                 })
                 .doOnSuccess(loanRequest -> log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully created loan request with id={}",loanRequest.getIdLoanRequest()))
-                .flatMap(savedLoan -> {
-                    log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully created loan request with id={}", savedLoan.getIdLoanRequest());
-                    return buildResponse(savedLoan, HttpStatus.CREATED.value(), RESPONSE_OK);
-                })
+                .flatMap(savedLoan -> buildResponse(savedLoan, HttpStatus.CREATED.value(), RESPONSE_OK))
                 .doOnError(err -> log.error("MESSAGE_HANDLER_LOG_TRACE : Error while creating loan request - {}", err.getMessage()));
     }
 
@@ -45,8 +41,7 @@ public class Handler {
         return ServerResponse.status(status).bodyValue(
                 ApiResponse.<T>builder()
                         .data(data)
-                        .status(status)
-                        .message(message)
+                        .code(message)
                         .build()
         );
     }

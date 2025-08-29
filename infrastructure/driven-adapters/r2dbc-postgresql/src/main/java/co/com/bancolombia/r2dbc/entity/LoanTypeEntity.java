@@ -5,6 +5,8 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @Builder(toBuilder = true)
@@ -24,10 +26,10 @@ public class LoanTypeEntity {
     private Double minAmount;
 
     @Column("monto_maximo")
-    private Double maxAmount;
+    private BigDecimal maxAmount;
 
     @Column("tasa_interes")
-    private Double interestRate;
+    private BigDecimal interestRate;
 
     @Column("validacion_automatica")
     private Boolean automaticValidation;

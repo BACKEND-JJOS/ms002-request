@@ -18,7 +18,7 @@ public class OpenApiDoc {
 
     private static final String TAG_USER = "LOAN_REQUEST";
 
-    public Builder createService(Builder builder){
+    public Builder createLoanRequest(Builder builder){
         return builder.operationId("loanRequest")
                 .description("Created a new loan request")
                 .requestBody(

@@ -12,6 +12,8 @@ import static org.springdoc.webflux.core.fn.SpringdocRouteBuilder.route;
 @Configuration
 public class RouterRest {
 
+    public static final String BASE_PATH_LOAN_REQUEST = "/v1/request";
+
     @Bean
     public WebProperties.Resources  resources(){return new WebProperties.Resources();}
 
@@ -19,9 +21,9 @@ public class RouterRest {
     @Bean
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
         return route()
-                .POST("/v1/request",
+                .POST(BASE_PATH_LOAN_REQUEST,
                         handler::listenPOSTRegisterLoanRequestUseCase,
-                        OpenApiDoc::createService)
+                        OpenApiDoc::createLoanRequest)
                 .build();
     }
 }

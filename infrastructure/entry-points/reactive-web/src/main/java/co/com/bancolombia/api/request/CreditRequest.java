@@ -3,6 +3,8 @@ package co.com.bancolombia.api.request;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,7 +19,7 @@ public class CreditRequest {
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "500000", message = "Minimum amount is 500.000")
     @DecimalMax(value = "500000000", message = "Maximum amount is 500.000.000")
-    private Double amount;
+    private BigDecimal amount;
 
     @NotNull(message = "Term is required")
     @Min(value = 1, message = "Minimum term is 1 month")

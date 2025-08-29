@@ -9,8 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class ApiResponse<T> {
-
     private T data;
-    private Integer status;
-    private String message;
+    private Integer code;
 }

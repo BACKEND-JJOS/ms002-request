@@ -2,6 +2,8 @@ package co.com.bancolombia.model.loantype;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -11,9 +13,9 @@ public class LoanType {
 
     private Integer idLoanType;
     private String name;
-    private Double minAmount;
-    private Double maxAmount;
-    private Double interestRate;
-    private Boolean automaticValidation = false;
+    private BigDecimal minAmount;
+    private BigDecimal maxAmount;
+    private BigDecimal interestRate;
+    private Boolean automaticValidation;
 
 }

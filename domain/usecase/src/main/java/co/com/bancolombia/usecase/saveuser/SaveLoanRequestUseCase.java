@@ -4,11 +4,14 @@ import co.com.bancolombia.model.exceptions.BusinessException;
 import co.com.bancolombia.model.loanrequest.LoanRequest;
 import co.com.bancolombia.model.loanrequest.gateway.LoanRequestRepository;
 import co.com.bancolombia.model.loantype.gateway.LoanTypeRepository;
+import co.com.bancolombia.model.responsecode.ResponseCode;
 import co.com.bancolombia.model.status.StatusType;
 import co.com.bancolombia.model.status.gateway.StatusRepository;
 import co.com.bancolombia.model.user.gateway.UserRepository;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
 
 
 @RequiredArgsConstructor
@@ -25,7 +28,7 @@ public class SaveLoanRequestUseCase {
     public Mono<LoanRequest> execute(LoanRequest loanRequest, String identificationUser) {
 
         return loanTypeRepository.findById(loanRequest.getLoanType().getIdLoanType())
-                .switchIfEmpty(Mono.error(new BusinessException("The loan type does not exist")))
+                .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_TYPE_NOT_EXISTS)))
                 .flatMap(loanType ->
                         validateAmountMinLoan(loanRequest.getAmount(), loanType.getMinAmount())
                                 .then(validateAmountMaxLoan(loanRequest.getAmount(), loanType.getMaxAmount()))
@@ -35,7 +38,7 @@ public class SaveLoanRequestUseCase {
                 .flatMap(loanType ->
                         statusRepository.findByName(StatusType.PENDING.getDbName())
                                 .switchIfEmpty(Mono.error(new BusinessException(
-                                        "Error linking request status, contact admin"
+                                        ResponseCode.STATUS_NOT_EXISTS
                                 )))
                                 .map(status -> loanRequest.toBuilder()
                                         .loanType(loanType)
@@ -44,7 +47,7 @@ public class SaveLoanRequestUseCase {
                 )
                 .flatMap(loanRequestSet -> userRepository.getByIdentification(identificationUser)
                         .switchIfEmpty(Mono.error(
-                                new BusinessException("User not found with identification: " + identificationUser)))
+                                new BusinessException(ResponseCode.USER_NOT_EXISTS)))
                         .map(user -> loanRequestSet.toBuilder()
                                 .user(user)
                                 .build())
@@ -53,20 +56,20 @@ public class SaveLoanRequestUseCase {
     }
 
 
-    public Mono<Void> validateAmountMinLoan(Double requestedAmount, Double minAmountParametized) {
+    public Mono<Void> validateAmountMinLoan(BigDecimal requestedAmount, BigDecimal minAmountParameterized) {
         return Mono.just(requestedAmount)
-                .filter(amount -> amount >= minAmountParametized)
+                .filter(amount -> amount.compareTo(minAmountParameterized) >= 0)
                 .switchIfEmpty(Mono.error(new BusinessException(
-                        "The requested amount cannot be lower than the minimum allowed."
+                        ResponseCode.LOAN_AMOUNT_BELOW_MIN
                 )))
                 .then();
     }
 
-    public Mono<Void> validateAmountMaxLoan(Double requestedAmount, Double maxAmountParametized) {
+    public Mono<Void> validateAmountMaxLoan(BigDecimal requestedAmount, BigDecimal maxAmountParameterized) {
         return Mono.just(requestedAmount)
-                .filter(amount -> amount <= maxAmountParametized)
+                .filter(amount -> amount.compareTo(maxAmountParameterized) <= 0)
                 .switchIfEmpty(Mono.error(new BusinessException(
-                        "The requested amount cannot exceed the maximum allowed."
+                        ResponseCode.LOAN_AMOUNT_ABOVE_MAX
                 )))
                 .then();
     }

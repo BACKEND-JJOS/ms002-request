@@ -1,6 +1,7 @@
 package co.com.bancolombia.r2dbc;
 
 import co.com.bancolombia.model.exceptions.TechnicalException;
+import co.com.bancolombia.model.responsecode.ResponseCode;
 import co.com.bancolombia.model.status.Status;
 import co.com.bancolombia.model.status.gateway.StatusRepository;
 import co.com.bancolombia.r2dbc.entity.StatusEntity;
@@ -29,7 +30,7 @@ public class StatusReactiveRepositoryAdapter
                 })
                 .onErrorMap(throwable -> {
                     log.error("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : DB error while finding status name={} - {}", name, throwable.getMessage());
-                    return new TechnicalException("Database error: Please contact the administrator.");
+                    return new TechnicalException(ResponseCode.DATA_BASE_FAILED);
                 });
     }
 

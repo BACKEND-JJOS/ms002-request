@@ -5,6 +5,8 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @Builder(toBuilder = true)
@@ -21,7 +23,7 @@ public class LoanRequestEntity {
     private Integer userId;
 
     @Column("monto")
-    private Double amount;
+    private BigDecimal amount;
 
     @Column("plazo")
     private Integer term;

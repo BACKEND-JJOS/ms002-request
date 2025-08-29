@@ -9,6 +9,7 @@ import co.com.bancolombia.r2dbc.mapper.LoanRequestMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -22,6 +23,7 @@ public class LoanRequestReactiveRepositoryAdapter
     }
 
     @Override
+    @Transactional
     public Mono<LoanRequest> save(LoanRequest loanRequest) {
         log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE: INIT save loan request");
         return Mono.just(loanRequest)

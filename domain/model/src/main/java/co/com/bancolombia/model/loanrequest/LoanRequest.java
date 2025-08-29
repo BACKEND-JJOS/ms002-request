@@ -5,6 +5,8 @@ import co.com.bancolombia.model.status.Status;
 import co.com.bancolombia.model.user.User;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -14,7 +16,7 @@ public class LoanRequest {
 
     private Integer idLoanRequest;
     private User user;
-    private Double amount;
+    private BigDecimal amount;
     private Integer term;
     private String email;
     private Status status;
