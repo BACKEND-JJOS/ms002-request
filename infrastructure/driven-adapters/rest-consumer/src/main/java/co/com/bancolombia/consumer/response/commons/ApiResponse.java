@@ -10,5 +10,5 @@ import lombok.*;
 @Builder(toBuilder = true)
 public class ApiResponse<T> {
     private T data;
-    private Integer code;
+    private String code;
 }
