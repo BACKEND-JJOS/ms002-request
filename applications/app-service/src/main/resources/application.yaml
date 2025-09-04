@@ -60,3 +60,9 @@ resilience4j:
         slidingWindowSize: 10
         minimumNumberOfCalls: 10
         waitDurationInOpenState: "10s"
+security:
+  jwt:
+    key:
+      private: a01aafbfe92bcef60384cb19fdb8812ad61504e95510f71b5a28c575721ef13c
+    user:
+      generator: AUTH_JWT_BACKEND

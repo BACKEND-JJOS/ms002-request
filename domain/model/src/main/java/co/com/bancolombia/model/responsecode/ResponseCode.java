@@ -12,4 +12,7 @@ public class ResponseCode {
     public static final String DATA_BASE_FAILED = "MS002-REQUEST-ERROR006";
     public static final String LOAN_AMOUNT_BELOW_MIN = "MS002-REQUEST-ERROR007"; // The requested amount cannot be lower than the minimum allowed
     public static final String LOAN_AMOUNT_ABOVE_MAX = "MS002-REQUEST-ERROR008";// The requested amount cannot exceed the maximum allowed
+    public static final String UNAUTHORIZED = "MS001-AUTH-ERROR009";
+    public static final String FORBIDDEN = "MS001-AUTH-ERROR010";
+    public static final String LOAN_REQUEST_ONLY_FOR_SELF = "MS002-REQUEST-ERROR009";
 }

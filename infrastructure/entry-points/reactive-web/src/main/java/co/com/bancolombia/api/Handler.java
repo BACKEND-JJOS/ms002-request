@@ -4,6 +4,7 @@ import co.com.bancolombia.api.mapper.LoanRequestMapper;
 import co.com.bancolombia.api.request.CreditRequest;
 import co.com.bancolombia.api.response.ApiResponse;
 import co.com.bancolombia.api.validator.GenericValidator;
+import co.com.bancolombia.security.SecurityHelper;
 import co.com.bancolombia.usecase.saveuser.SaveLoanRequestUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +27,15 @@ public class Handler {
         log.info("MESSAGE_HANDLER_LOG_TRACE : INIT METHOD REGISTER LOAN APPLICATION");
         return serverRequest.bodyToMono(CreditRequest.class)
                 .flatMap(GenericValidator::validate)
-                .flatMap(creditRequest -> {
-                    var loanRequest = LoanRequestMapper.toDomain(creditRequest);
-                    return saveLoanRequestUseCase.execute(loanRequest, creditRequest.getDocumentNumber());
-                })
+                .flatMap(creditRequest ->  SecurityHelper.getLoggedUserIdentification()
+                        .flatMap(loggedIdentification -> {
+                            var loanRequest = LoanRequestMapper.toDomain(creditRequest);
+                            return saveLoanRequestUseCase.execute(
+                                    loanRequest,
+                                    loggedIdentification,
+                                    creditRequest.getDocumentNumber()
+                            );
+                        }))
                 .doOnSuccess(loanRequest -> log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully created loan request with id={}",loanRequest.getIdLoanRequest()))
                 .flatMap(savedLoan -> buildResponse(savedLoan, HttpStatus.CREATED.value(), RESPONSE_OK))
                 .doOnError(err -> log.error("MESSAGE_HANDLER_LOG_TRACE : Error while creating loan request - {}", err.getMessage()));

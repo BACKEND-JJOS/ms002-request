@@ -1,5 +1,6 @@
 package co.com.bancolombia.consumer.config;
 
+import co.com.bancolombia.consumer.auth.JwtAuthorizationFilter;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ public class RestConsumerConfig {
             .baseUrl(url)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
             .clientConnector(getClientHttpConnector())
+            .filter(JwtAuthorizationFilter.withJwtBearer())
             .build();
     }
 

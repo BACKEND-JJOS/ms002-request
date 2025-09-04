@@ -6,6 +6,7 @@ import co.com.bancolombia.model.exceptions.TechnicalException;
 import co.com.bancolombia.model.responsecode.ResponseCode;
 import co.com.bancolombia.model.user.User;
 import co.com.bancolombia.model.user.gateway.UserRepository;
+import co.com.bancolombia.security.SecurityHelper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,31 +31,28 @@ public class UserRestConsumer implements UserRepository{
         log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : INIT getByIdentification - id={}", identification);
         return client.get()
                 .uri(API_V1_USER + identification)
-                .exchangeToMono(response -> {
-                    HttpStatusCode status = response.statusCode();
-                    if (status.is2xxSuccessful()) {
-                        return response.bodyToMono(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {})
-                                .flatMap(apiResponse -> {
-
-                                        log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : User found identification={}", identification);
-                                        return Mono.just(
-                                                User.builder()
-                                                    .idUser(apiResponse.getData().getIdUser())
-                                                    .identityDocument(apiResponse.getData().getIdentityDocument())
-                                                    .email(apiResponse.getData().getEmail())
-                                                    .build()
-                                        );
-                                });
-                    } else if (status == HttpStatus.NOT_FOUND) {
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    if (response.statusCode() == HttpStatus.NOT_FOUND) {
                         log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : No user found identification={}", identification);
                         return Mono.empty();
-                    } else if (status.is5xxServerError()) {
-                        log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : User service internal server error for identification={}", identification);
-                        return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
-                    } else {
-                        log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Unexpected response status {} for identification={}", status, identification);
-                        return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
                     }
+                    log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Client error {} for identification={}", response.statusCode(), identification);
+                    return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, response -> {
+                    log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Server error {} for identification={}", response.statusCode(), identification);
+                    return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
+                })
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {})
+                .map(apiResponse -> {
+                    UserResponse data = apiResponse.getData();
+                    log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : User found identification={}", identification);
+                    return User.builder()
+                            .idUser(data.getIdUser())
+                            .identityDocument(data.getIdentityDocument())
+                            .email(data.getEmail())
+                            .build();
                 })
                 .doOnError(err -> log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Error calling user service identification={} - {}", identification, err.getMessage()))
                 .doOnSubscribe(sub -> log.debug("MESSAGE_ADAPTER_REST_LOG_TRACE : Calling user service for identification={}", identification));

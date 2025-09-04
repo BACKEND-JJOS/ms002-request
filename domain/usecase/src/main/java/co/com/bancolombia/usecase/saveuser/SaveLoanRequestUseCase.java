@@ -25,55 +25,56 @@ public class SaveLoanRequestUseCase {
 
     private final UserRepository userRepository;
 
-    public Mono<LoanRequest> execute(LoanRequest loanRequest, String identificationUser) {
+    public Mono<LoanRequest> execute(LoanRequest loanRequest,
+                                     String loggedIdentification,
+                                     String requestIdentification) {
 
-        return loanTypeRepository.findById(loanRequest.getLoanType().getIdLoanType())
-                .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_TYPE_NOT_EXISTS)))
-                .flatMap(loanType ->
-                        validateAmountMinLoan(loanRequest.getAmount(), loanType.getMinAmount())
-                                .then(validateAmountMaxLoan(loanRequest.getAmount(), loanType.getMaxAmount()))
-                                .then(Mono.just(loanType))
-                )
+        return Mono.just(loanRequest)
+                .filter(lr -> loggedIdentification.equals(requestIdentification))
+                .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_REQUEST_ONLY_FOR_SELF)))
 
-                .flatMap(loanType ->
-                        statusRepository.findByName(StatusType.PENDING.getDbName())
-                                .switchIfEmpty(Mono.error(new BusinessException(
-                                        ResponseCode.STATUS_NOT_EXISTS
-                                )))
-                                .map(status -> loanRequest.toBuilder()
+                .flatMap(lr -> loanTypeRepository.findById(lr.getLoanType().getIdLoanType())
+                        .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_TYPE_NOT_EXISTS)))
+
+                        .flatMap(loanType -> validateAmountMinLoan(lr.getAmount(), loanType.getMinAmount())
+                                .then(validateAmountMaxLoan(lr.getAmount(), loanType.getMaxAmount()))
+                                .thenReturn(lr.toBuilder()
                                         .loanType(loanType)
-                                        .status(status)
                                         .build())
+                        )
                 )
-                .flatMap(loanRequestSet -> userRepository.getByIdentification(identificationUser)
-                        .switchIfEmpty(Mono.error(
-                                new BusinessException(ResponseCode.USER_NOT_EXISTS)))
-                        .map(user -> loanRequestSet.toBuilder()
+
+                .flatMap(lr -> statusRepository.findByName(StatusType.PENDING.getDbName())
+                        .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.STATUS_NOT_EXISTS)))
+                        .map(status -> lr.toBuilder()
+                                .status(status)
+                                .build()
+                        )
+                )
+
+                .flatMap(lr -> userRepository.getByIdentification(requestIdentification)
+                        .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.USER_NOT_EXISTS)))
+                        .map(user -> lr.toBuilder()
                                 .user(user)
-                                .build())
+                                .build()
+                        )
                 )
+
                 .flatMap(loanRequestRepository::save);
     }
 
-
-    public Mono<Void> validateAmountMinLoan(BigDecimal requestedAmount, BigDecimal minAmountParameterized) {
+    private Mono<Void> validateAmountMinLoan(BigDecimal requestedAmount, BigDecimal minAmountParameterized) {
         return Mono.just(requestedAmount)
                 .filter(amount -> amount.compareTo(minAmountParameterized) >= 0)
-                .switchIfEmpty(Mono.error(new BusinessException(
-                        ResponseCode.LOAN_AMOUNT_BELOW_MIN
-                )))
+                .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_AMOUNT_BELOW_MIN)))
                 .then();
     }
 
-    public Mono<Void> validateAmountMaxLoan(BigDecimal requestedAmount, BigDecimal maxAmountParameterized) {
+    private Mono<Void> validateAmountMaxLoan(BigDecimal requestedAmount, BigDecimal maxAmountParameterized) {
         return Mono.just(requestedAmount)
                 .filter(amount -> amount.compareTo(maxAmountParameterized) <= 0)
-                .switchIfEmpty(Mono.error(new BusinessException(
-                        ResponseCode.LOAN_AMOUNT_ABOVE_MAX
-                )))
+                .switchIfEmpty(Mono.error(new BusinessException(ResponseCode.LOAN_AMOUNT_ABOVE_MAX)))
                 .then();
     }
-
-
-
 }
+
