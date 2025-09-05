@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder(toBuilder = true)
 public class User {
-    private Integer idUser;
+    private Long idUser;
     private String identityDocument;
     private String email;
 }

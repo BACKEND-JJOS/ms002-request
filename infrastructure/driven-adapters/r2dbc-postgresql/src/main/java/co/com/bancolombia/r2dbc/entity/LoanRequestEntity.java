@@ -20,7 +20,7 @@ public class LoanRequestEntity {
     private Integer idLoanRequest;
 
     @Column("usuario_id")
-    private Integer userId;
+    private Long userId;
 
     @Column("monto")
     private BigDecimal amount;
