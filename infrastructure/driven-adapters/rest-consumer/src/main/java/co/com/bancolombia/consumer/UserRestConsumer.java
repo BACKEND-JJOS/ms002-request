@@ -17,20 +17,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserRestConsumer implements UserRepository{
     private final WebClient client;
 
-    protected final String API_V1_USER = "/v1/user/";
+    protected final String API_V1_USER = "/v1/user";
 
     @Override
     @CircuitBreaker(name = "userService", fallbackMethod = "fallbackUser")
     public Mono<User> getByIdentification(String identification) {
         log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : INIT getByIdentification - id={}", identification);
         return client.get()
-                .uri(API_V1_USER + identification)
+                .uri(API_V1_USER + "/" +  identification)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response -> {
                     if (response.statusCode() == HttpStatus.NOT_FOUND) {
@@ -58,8 +60,57 @@ public class UserRestConsumer implements UserRepository{
                 .doOnSubscribe(sub -> log.debug("MESSAGE_ADAPTER_REST_LOG_TRACE : Calling user service for identification={}", identification));
     }
 
+    @Override
+    @CircuitBreaker(name = "userServiceById", fallbackMethod = "fallbackUserById")
+    public Mono<User> getById(Long idUser) {
+        log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : INIT getById - id={}", idUser);
+        return client.get()
+                .uri(uriBuilder -> {
+                    String uri = uriBuilder
+                            .path(API_V1_USER)
+                            .queryParam("idUser", idUser)
+                            .build()
+                            .toString();
+                    log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : Executing request to {}", uri);
+                    return URI.create(uri);
+                })
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    if (response.statusCode() == HttpStatus.NOT_FOUND) {
+                        log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : No user found idUser={}", idUser);
+                        return Mono.empty();
+                    }
+                    log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Client error {} for idUser={}", response.statusCode(), idUser);
+                    return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, response -> {
+                    log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Server error {} for idUser={}", response.statusCode(), idUser);
+                    return Mono.error(new TechnicalException(ResponseCode.TECHNICAL_ERROR));
+                })
+                .bodyToMono(new ParameterizedTypeReference<ApiResponse<UserResponse>>() {})
+                .map(apiResponse -> {
+                    UserResponse data = apiResponse.getData();
+                    log.info("MESSAGE_ADAPTER_REST_LOG_TRACE : User found idUser={}", idUser);
+                    return User.builder()
+                            .idUser(data.getIdUser())
+                            .identityDocument(data.getIdentityDocument())
+                            .email(data.getEmail())
+                            .baseSalary(data.getBaseSalary())
+                            .build();
+                })
+                .doOnError(err -> log.error("MESSAGE_ADAPTER_REST_LOG_TRACE : Error calling user service identification={} - {}", idUser, err.getMessage()))
+                .doOnSubscribe(sub -> log.debug("MESSAGE_ADAPTER_REST_LOG_TRACE : Calling user service for identification={}", idUser));
+    }
+
     public Mono<User> fallbackUser(String identification, Throwable ex) {
         log.warn("MESSAGE_ADAPTER_REST_LOG_TRACE : Fallback triggered for user identification={} - {}", identification, ex.getMessage());
+        return Mono.error(new TechnicalException(
+                ResponseCode.TECHNICAL_ERROR
+        ));
+    }
+
+    public Mono<User> fallbackUserById(Long id, Throwable ex) {
+        log.warn("MESSAGE_ADAPTER_REST_LOG_TRACE : Fallback triggered for user id={} - {}", id, ex.getMessage());
         return Mono.error(new TechnicalException(
                 ResponseCode.TECHNICAL_ERROR
         ));

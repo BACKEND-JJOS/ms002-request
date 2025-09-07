@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class LoanRequestWithPayment {
     private LoanRequest loanRequest;
     private BigDecimal monthlyPayment;
