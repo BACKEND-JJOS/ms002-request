@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 @Repository
 public class LoanTypeReactiveRepositoryAdapter
-        extends ReactiveAdapterOperations<LoanType, LoanTypeEntity,Integer, LoanTypeReactiveRepository>
+        extends ReactiveAdapterOperations<LoanType, LoanTypeEntity,Long, LoanTypeReactiveRepository>
         implements LoanTypeRepository {
 
     public LoanTypeReactiveRepositoryAdapter(LoanTypeReactiveRepository repository, ObjectMapper mapper) {

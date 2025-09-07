@@ -31,4 +31,23 @@ public class LoanRequestMapper {
                 .loanType(loanType)
                 .build();
     }
+
+
+    public static LoanRequest toDomain(LoanRequestEntity entity) {
+        return LoanRequest.builder()
+                .idLoanRequest(entity.getIdLoanRequest())
+                .user(User.builder()
+                        .idUser(entity.getUserId())
+                        .build())
+                .amount(entity.getAmount())
+                .term(entity.getTerm())
+                .email(entity.getEmail())
+                .status(Status.builder()
+                        .idStatus(entity.getStatusId())
+                        .build())
+                .loanType(LoanType.builder()
+                        .idLoanType(entity.getLoanTypeId())
+                        .build())
+                .build();
+    }
 }

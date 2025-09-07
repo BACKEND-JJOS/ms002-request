@@ -26,5 +26,5 @@ public class CreditRequest {
     private Integer term;
 
     @NotNull(message = "Loan type is required")
-    private Integer loanTypeId;
+    private Long loanTypeId;
 }

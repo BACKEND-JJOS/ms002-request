@@ -32,8 +32,8 @@ public class LoanRequestEntity {
     private String email;
 
     @Column("estado_id")
-    private Integer statusId;
+    private Long statusId;
 
     @Column("tipo_prestamo_id")
-    private Integer loanTypeId;
+    private Long loanTypeId;
 }

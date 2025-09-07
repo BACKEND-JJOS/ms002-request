@@ -9,7 +9,7 @@ import lombok.*;
 @Builder(toBuilder = true)
 public class Status {
 
-    private Integer idStatus;
+    private Long idStatus;
     private String name;
     private String description;
 
