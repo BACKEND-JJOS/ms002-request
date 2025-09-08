@@ -40,12 +40,14 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
         HttpStatus status = ExceptionHttpStatusMapper.resolveHttpStatus(error);
 
         String code = resolveErrorCode(error);
-        Object data = (error instanceof ValidationException ve) ? ve.getMessage() : null;
+        String message = resolveErrorMessage(error);
+        Object data = (error instanceof ValidationException ve) ? ve.getData() : null;
+
 
         return ServerResponse
                 .status(status)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(ExceptionResponseBuilder.buildResponse(code, data));
+                .bodyValue(ExceptionResponseBuilder.buildResponse(code, data, message));
     }
     private String resolveErrorCode(Throwable error) {
         if (error instanceof BusinessException be) return be.getCode();
@@ -53,6 +55,15 @@ public class GlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
         if (error instanceof ValidationException ve) return ve.getCode();
         if (error instanceof BusinessUnAuthorizedException ue) return ue.getCode();
         if (error instanceof ForbiddenUnAuthorizedException fe) return fe.getCode();
-        return ResponseCode.TECHNICAL_ERROR;
+        return ResponseCode.TECHNICAL_ERROR.getCode();
+    }
+
+    private String resolveErrorMessage(Throwable error) {
+        if (error instanceof BusinessException be) return be.getMessage();
+        if (error instanceof TechnicalException te) return te.getMessage();
+        if (error instanceof ValidationException ve) return ve.getMessage();
+        if (error instanceof BusinessUnAuthorizedException ue) return ue.getMessage();
+        if (error instanceof ForbiddenUnAuthorizedException fe) return fe.getMessage();
+        return ResponseCode.TECHNICAL_ERROR.getDefaultMessage();
     }
 }

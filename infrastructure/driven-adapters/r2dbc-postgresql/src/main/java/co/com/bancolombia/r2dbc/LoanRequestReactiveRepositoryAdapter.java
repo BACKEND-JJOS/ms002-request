@@ -5,6 +5,7 @@ import co.com.bancolombia.model.exceptions.TechnicalException;
 import co.com.bancolombia.model.loanrequest.LoanRequest;
 import co.com.bancolombia.model.loanrequest.gateway.LoanRequestRepository;
 import co.com.bancolombia.model.loantype.LoanType;
+import co.com.bancolombia.model.responsecode.ResponseCode;
 import co.com.bancolombia.model.status.Status;
 import co.com.bancolombia.model.status.StatusType;
 import co.com.bancolombia.model.user.User;
@@ -40,7 +41,7 @@ public class LoanRequestReactiveRepositoryAdapter
                 .map(entity -> LoanRequestMapper.toDomain(entity, loanRequest.getStatus(), loanRequest.getLoanType(), loanRequest.getUser()))
                 .doOnSuccess(saved -> log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : Loan request saved id={}", saved.getIdLoanRequest()))
                 .doOnError(err -> log.error("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : DB error while saving loan request - {}", err.getMessage()))
-                .onErrorMap(err -> new TechnicalException("Database error: Please contact the administrator."));
+                .onErrorMap(err -> new TechnicalException(ResponseCode.DATA_BASE_FAILED));
     }
 
     @Override
@@ -55,7 +56,7 @@ public class LoanRequestReactiveRepositoryAdapter
     private Mono<Long> countPending(Long userId, Long idLoanType, Long term) {
         return repository.countPendingNative(userId, idLoanType, term, StatusType.PENDING.getDbId())
                 .doOnError(err -> log.error("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : DB error while counting loan requests - {}", err.getMessage()))
-                .onErrorMap(err -> new TechnicalException("Database error while counting loan requests"));
+                .onErrorMap(err -> new TechnicalException(ResponseCode.DATA_BASE_FAILED));
     }
 
     private Flux<LoanRequest> fetchPending(Long userId, Long idLoanType, Long term, Integer size, int offset) {
@@ -63,7 +64,7 @@ public class LoanRequestReactiveRepositoryAdapter
                 .map(LoanRequestMapper::toDomain)
                 .doOnComplete(() -> log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : Completed filtering loan requests"))
                 .doOnError(err -> log.error("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : DB error while filtering loan requests - {}", err.getMessage()))
-                .onErrorMap(err -> new TechnicalException("Database error while filtering loan requests"));
+                .onErrorMap(err -> new TechnicalException(ResponseCode.DATA_BASE_FAILED));
     }
 
     private PageDomain<LoanRequest> buildPage(Long total, List<LoanRequest> data, int size, int page) {

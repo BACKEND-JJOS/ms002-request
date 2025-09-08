@@ -25,9 +25,7 @@ public class StatusReactiveRepositoryAdapter
     public Mono<Status> findByName(String name) {
         log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : INIT findByName - name={}", name);
         return repository.findByName(name)
-                .doOnSuccess(status -> {
-                        log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : Status filter by name={}", name);
-                })
+                .doOnSuccess(status -> log.info("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : Status filter by name={}", name))
                 .onErrorMap(throwable -> {
                     log.error("MESSAGE_ADAPTER_R2DBC_LOG_TRACE : DB error while finding status name={} - {}", name, throwable.getMessage());
                     return new TechnicalException(ResponseCode.DATA_BASE_FAILED);

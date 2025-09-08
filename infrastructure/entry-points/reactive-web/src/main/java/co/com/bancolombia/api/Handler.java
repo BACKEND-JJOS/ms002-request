@@ -7,6 +7,7 @@ import co.com.bancolombia.api.request.FilterLoanRequest;
 import co.com.bancolombia.api.request.PaginatedRequest;
 import co.com.bancolombia.api.response.ApiResponse;
 import co.com.bancolombia.api.validator.GenericValidator;
+import co.com.bancolombia.model.responsecode.ResponseCode;
 import co.com.bancolombia.security.SecurityHelper;
 import co.com.bancolombia.usecase.filterpendingloanrquest.FilterPendingLoanRequestUseCase;
 import co.com.bancolombia.usecase.saveuser.SaveLoanRequestUseCase;
@@ -33,7 +34,7 @@ public class Handler {
         log.info("MESSAGE_HANDLER_LOG_TRACE : INIT METHOD REGISTER LOAN APPLICATION");
         return serverRequest.bodyToMono(CreditRequest.class)
                 .flatMap(GenericValidator::validate)
-                .flatMap(creditRequest ->  SecurityHelper.getLoggedUserIdentification()
+                .flatMap(creditRequest -> SecurityHelper.getLoggedUserIdentification()
                         .flatMap(loggedIdentification -> {
                             var loanRequest = LoanRequestMapper.toDomain(creditRequest);
                             return saveLoanRequestUseCase.execute(
@@ -42,8 +43,13 @@ public class Handler {
                                     creditRequest.getDocumentNumber()
                             );
                         }))
-                .doOnSuccess(loanRequest -> log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully created loan request with id={}",loanRequest.getIdLoanRequest()))
-                .flatMap(savedLoan -> buildResponse(savedLoan, HttpStatus.CREATED.value(), RESPONSE_OK))
+                .doOnSuccess(loanRequest -> log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully created loan request with id={}", loanRequest.getIdLoanRequest()))
+                .flatMap(savedLoan -> buildResponse(savedLoan,
+                                HttpStatus.CREATED.value(),
+                                ResponseCode.LOAN_REQUEST_CREATED_SUCCESSFULLY.getCode(),
+                                ResponseCode.LOAN_REQUEST_CREATED_SUCCESSFULLY.getDefaultMessage()
+                        )
+                )
                 .doOnError(err -> log.error("MESSAGE_HANDLER_LOG_TRACE : Error while creating loan request - {}", err.getMessage()));
     }
 
@@ -66,15 +72,21 @@ public class Handler {
                 .map(LoanRequestFilterMapper::toDomain)
                 .flatMap(filterPendingLoanRequestUseCase::execute)
                 .doOnSuccess(loanRequest -> log.info("MESSAGE_HANDLER_LOG_TRACE : Successfully filtered apply"))
-                .flatMap(pageDomain -> buildResponse(pageDomain, HttpStatus.OK.value(), RESPONSE_OK))
+                .flatMap(pageDomain -> buildResponse(pageDomain,
+                                HttpStatus.OK.value(),
+                                ResponseCode.LOAN_REQUEST_FILTERED_SUCCESSFULLY.getCode(),
+                                ResponseCode.LOAN_REQUEST_FILTERED_SUCCESSFULLY.getDefaultMessage()
+                        )
+                )
                 .doOnError(err -> log.error("MESSAGE_HANDLER_LOG_TRACE : Error while filtered apply - {}", err.getMessage()));
     }
 
-    private <T> Mono<ServerResponse> buildResponse(T data, int status, String message) {
+    private <T> Mono<ServerResponse> buildResponse(T data, int status, String code, String message) {
         return ServerResponse.status(status).bodyValue(
                 ApiResponse.<T>builder()
                         .data(data)
-                        .code(message)
+                        .code(code)
+                        .message(message)
                         .build()
         );
     }

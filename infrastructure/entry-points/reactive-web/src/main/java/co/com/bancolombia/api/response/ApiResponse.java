@@ -12,4 +12,5 @@ import lombok.*;
 public class ApiResponse <T>{
     private T data;
     private String code;
+    private String message;
 }

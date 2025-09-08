@@ -22,7 +22,7 @@ public class GenericValidator {
         Set<ConstraintViolation<T>> violations = validator.validate(object);
         return violations.isEmpty()
                 ? Mono.just(object)
-                : Mono.error(new ValidationException("Validation errors: " + formatErrors(violations), ResponseCode.DATA_CORRUPTED));
+                : Mono.error(new ValidationException( ResponseCode.DATA_CORRUPTED.getCode(), ResponseCode.DATA_CORRUPTED.getDefaultMessage(), formatErrors(violations)));
     }
 
     private static <T> String formatErrors(Set<ConstraintViolation<T>> violations) {
